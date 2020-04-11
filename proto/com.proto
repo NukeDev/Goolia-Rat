@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package protobuf;
+
+service Com {
+  rpc HandleCommands (stream Request) returns (stream Response) {}
+}
+
+message Request {
+    string ClientID = 1;
+    string ClientIPAddress = 2;
+    string Command = 3;
+    bytes Data = 4;
+}
+
+message Response {
+    string ClientID = 1;
+    string ClientIPAddress = 2;
+    string Command = 3;
+    bytes Data = 4;
+}
