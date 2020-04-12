@@ -7,7 +7,6 @@ import (
 	"log"
 	"time"
 
-	osinfo "github.com/NukeDev/Goolia/client/osinfo"
 	utils "github.com/NukeDev/Goolia/client/utils"
 	pb "github.com/NukeDev/Goolia/proto"
 	"github.com/denisbrodbeck/machineid"
@@ -95,7 +94,7 @@ func ClientProcess() {
 					}
 				case "osinfo":
 					{
-						info, err := osinfo.GetOsInfo()
+						info, err := utils.GetOsInfo()
 						if err != nil {
 							log.Printf("%v", err)
 						}

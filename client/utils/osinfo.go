@@ -1,4 +1,4 @@
-package osinfo
+package utils
 
 import (
 	"github.com/blackfireio/osinfo"
