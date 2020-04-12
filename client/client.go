@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"log"
@@ -11,8 +9,8 @@ import (
 
 	osinfo "github.com/NukeDev/Goolia/client/osinfo"
 	pb "github.com/NukeDev/Goolia/proto"
+	"github.com/denisbrodbeck/machineid"
 	externalip "github.com/glendc/go-external-ip"
-
 	"google.golang.org/grpc"
 )
 
@@ -125,11 +123,11 @@ func main() {
 }
 
 func (cl *Client) Generate() {
-	b := make([]byte, 22)
-	if _, err := rand.Read(b); err != nil {
-
+	id, err := machineid.ProtectedID("GooliaClient")
+	if err != nil {
+		log.Fatal(err)
 	}
-	cl.ID = hex.EncodeToString(b)
+	cl.ID = id
 
 	consensus := externalip.DefaultConsensus(nil, nil)
 

