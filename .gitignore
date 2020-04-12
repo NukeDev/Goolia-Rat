@@ -16,3 +16,5 @@
 
 build/*
 proto/*.go
+client/vendor/*
+server/vendor/*

@@ -2,7 +2,7 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 h1:3iF31c7rp7nGZVDv7YQ+VxOgpipVfPKotLXykjZmwM8=
 github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/NukeDev/Goolia v0.0.0-20200412171103-8327ee3cda00 h1:aOxwm0E1EHAVvIQaXZzkKUyvE28wO5t4gCBaFT5kTMk=
+github.com/NukeDev/Goolia v0.0.0-20200412203539-4f1bc544d67e h1:Y0qp/btybrjBdQf4c/ZcLBeJ//1zvaT+jFln2wFqVIo=
 github.com/blackfireio/osinfo v1.0.1 h1:RyifvJDaQ7ItEuaEdjtzLHA7vdNSW9IjiYiyQbkPjRM=
 github.com/blackfireio/osinfo v1.0.1/go.mod h1:Pd987poVNmd5Wsx6PRPw4+w7kLlf9iJxoRKPtPAjOrA=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

