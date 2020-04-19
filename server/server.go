@@ -46,7 +46,6 @@ var Command = map[string]string{}
 func (s server) HandleCommands(srv pb.Com_HandleCommandsServer) error {
 
 	ctx := srv.Context()
-	log.Printf("Client connected")
 	for {
 
 		// exit if context is done
@@ -136,8 +135,10 @@ func (s server) HandleCommands(srv pb.Com_HandleCommandsServer) error {
 				}
 
 				for shot := range shots {
+					i := strconv.Itoa(shot)
 
-					ioutil.WriteFile(time.Now().Format("20060102150405")+".png", shots[shot].Data, 0777)
+					ioutil.WriteFile(time.Now().Format("20060102150405")+i+".png", shots[shot].Data, 0777)
+					fmt.Printf("Receiving screenshot from Clientid [%s]\n", cl.ID)
 				}
 
 			}
