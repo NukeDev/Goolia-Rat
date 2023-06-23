@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/NukeDev/Goolia/proto"
+	pb "github.com/NukeDev/Goolia-Rat/proto"
 
 	"google.golang.org/grpc"
 )
@@ -316,7 +316,7 @@ func (cli *CommandLine) Run() {
 
 }
 
-//GenerateClientsIds returns clients mapped as int
+// GenerateClientsIds returns clients mapped as int
 func GenerateClientsIds(clients map[string]Client) map[int]string {
 	localID := 0
 	localIDMap := map[int]string{}
